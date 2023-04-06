@@ -40,3 +40,4 @@ __php_packages:
 
 php_versions_alpine:
   - php81
+  - php82
