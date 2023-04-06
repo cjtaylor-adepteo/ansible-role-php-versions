@@ -1,0 +1,55 @@
+---
+- name: Set the correct opcache filename (Alpine).
+  set_fact:
+    php_opcache_conf_filename: "10-opcache.ini"
+
+- name: Ensure dirmngr is installed (gnupg dependency).
+  apk:
+    name: dirmngr
+    state: present
+
+# Alpine-specific tasks.
+#DEBIAN - name: Add dependencies for PHP versions (Alpine).
+#DEBIAN apk:
+#DEBIAN name:
+#DEBIAN - apk-transport-https
+#DEBIAN - ca-certificates
+#DEBIAN state: present
+#DEBIAN when: ansible_distribution == "Alpine"
+# : "Unsupported parameters for (apk) module: force, purge Supported parameters include: available, name, no_cache, repository, state, update_cache, upgrade"}
+
+- name: Purge PHP version packages (besides the currently chosen php_version).
+  apk:
+    name: "{{ php_versions_alpine | reject('search', 'php' ~ php_version) | list }}"
+    state: absent
+  register: php_version_purge
+
+# - name: Also purge php-common package if any versions were just purged.
+#   apk:
+#     name: php-common
+#     state: absent
+#   when: php_version_purge.changed | bool
+
+# - name: Create a symbolic link from php to php8
+#   ansible.builtin.file:
+#     src: /usr/bin/php8
+#     dest: /usr/bin/php
+#     owner: root
+#     group: root
+#     state: link
+
+# - name: Create a symbolic link from phpconfig8
+#   ansible.builtin.file:
+#     src: /usr/bin/php-config8
+#     dest: /usr/bin/php-config
+#     owner: root
+#     group: root
+#     state: link
+
+# - name: Create a symbolic link from phpize8
+#   ansible.builtin.file:
+#     src: /usr/bin/phpize8
+#     dest: /usr/bin/phpize
+#     owner: root
+#     group: root
+#     state: link
