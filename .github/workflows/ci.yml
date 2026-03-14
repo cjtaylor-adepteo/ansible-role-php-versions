@@ -19,14 +19,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the codebase.
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: 'geerlingguy.php-versions'
 
       - name: Set up Python 3.
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'  # Can't go to 3.14+ until Ansible 13.x
 
       - name: Install test dependencies.
         run: pip3 install yamllint
@@ -41,42 +41,32 @@ jobs:
     strategy:
       matrix:
         include:
-          # Default PHP version (8.1).
-          - distro: rockylinux8
+          # Default PHP version.
+          - distro: rockylinux9
             playbook: converge.yml
-          - distro: centos7
+          - distro: ubuntu2404
             playbook: converge.yml
+          - distro: debian12
+            playbook: converge.yml
+
+          # PHP 8.2.
+          - distro: rockylinux9
+            playbook: 8.2.yml
           - distro: ubuntu2204
-            playbook: converge.yml
-          - distro: debian10
-            playbook: converge.yml
-
-          # PHP 8.0.
-          - distro: rockylinux8
-            playbook: 8.0.yml
-          - distro: ubuntu1804
-            playbook: 8.0.yml
-          - distro: debian10
-            playbook: 8.0.yml
-
-          # PHP 7.4.
-          - distro: rockylinux8
-            playbook: 7.4.yml
-          - distro: ubuntu1804
-            playbook: 7.4.yml
-          - distro: debian10
-            playbook: 7.4.yml
+            playbook: 8.2.yml
+          - distro: debian12
+            playbook: 8.2.yml
 
     steps:
       - name: Check out the codebase.
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: 'geerlingguy.php-versions'
 
       - name: Set up Python 3.
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'  # Can't go to 3.14+ until Ansible 13.x
 
       - name: Install test dependencies.
         run: pip3 install ansible molecule molecule-plugins[docker] docker

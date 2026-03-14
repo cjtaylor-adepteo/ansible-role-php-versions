@@ -3,43 +3,70 @@
   set_fact:
     php_opcache_conf_filename: "10-opcache.ini"
 
-- name: Ensure dirmngr is installed (gnupg dependency).
-  apt:
-    name: dirmngr
-    state: present
-
-- name: Add repository for PHP versions (Ubuntu).
-  apt_repository: repo='ppa:ondrej/php'
-  when: ansible_distribution == "Ubuntu"
-
-# Debian-specific tasks.
-- name: Add dependencies for PHP versions (Debian).
+- name: Add dependencies for PHP versions.
   apt:
     name:
       - apt-transport-https
       - ca-certificates
+      - python3-debian
     state: present
-  when: ansible_distribution == "Debian"
 
-- name: Add Ondrej Sury's apt key (Debian).
-  apt_key:
-    url: https://packages.sury.org/php/apt.gpg
-    id: 15058500A0235D97F5D10063B188E2B695BD4743
-    state: present
-  when: ansible_distribution == "Debian"
+# Huge thanks to https://www.jeffgeerling.com/comment/34112#comment-34112
+- name: Make API request to Launchpad
+  uri:
+    url: "https://api.launchpad.net/devel/~ondrej/+archive/ubuntu/php"
+    return_content: true
+    method: GET
+    headers:
+      Accept: "application/json"
+  register: launchpad_response
+  check_mode: false
 
-- name: Add Ondrej Sury's repo (Debian).
-  apt_repository:
-    repo: "deb https://packages.sury.org/php/ {{ ansible_distribution_release }} main"
+- name: Parse JSON to extract signing key fingerprint
+  ansible.builtin.set_fact:
+    signing_key_fingerprint: "{{ launchpad_response.json.signing_key_fingerprint }}"
+
+- name: Retrieve ASCII representation of the key using the signing key fingerprint
+  uri:
+    url: "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{{ signing_key_fingerprint }}"
+    return_content: true
+    method: GET
+  register: keyserver_response
+  check_mode: false
+
+- name: Set data for Ondrej's repo (Ubuntu).
+  ansible.builtin.set_fact:
+    ondrej_repo_uri: "https://ppa.launchpadcontent.net/ondrej/php/ubuntu"
+    # Remove 'Comment' because response can be out of order.
+    # See: https://github.com/geerlingguy/ansible-role-php-versions/issues/94
+    ondrej_repo_signed_by: "{{ keyserver_response.content | regex_replace('\nComment.+\n','\n') }}"
+  when: ansible_facts.distribution == "Ubuntu"
+
+- debug: var=ondrej_repo_signed_by
+
+- name: Set data for Ondrej's repo (Debian).
+  ansible.builtin.set_fact:
+    ondrej_repo_uri: "https://packages.sury.org/php"
+    ondrej_repo_signed_by: "https://packages.sury.org/php/apt.gpg"
+  when: ansible_facts.distribution == "Debian"
+
+- name: Add Ondrej's PHP repo.
+  become: true
+  ansible.builtin.deb822_repository:
     state: present
+    name: "ondrej-php-{{ ansible_facts['distribution_release'] }}"
+    types: [deb]
+    uris: ["{{ ondrej_repo_uri }}"]
+    suites: ["{{ ansible_facts['distribution_release'] }}"]
+    components: [main]
+    signed_by: "{{ ondrej_repo_signed_by }}"
   register: php_ondrej_debian_repo
-  when: ansible_distribution == "Debian"
 
-- name: Update apt caches after repo is added (Debian).
+- name: Update apt caches after repo is added.
   apt: update_cache=true
   when:
     - php_ondrej_debian_repo.changed
-    - ansible_distribution == "Debian"
+    - ansible_facts.os_family == "Debian"
   tags: ['skip_ansible_lint']
 
 - name: Purge PHP version packages (besides the currently chosen php_version).

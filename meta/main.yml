@@ -8,17 +8,15 @@ galaxy_info:
   company: "Midwestern Mac, LLC"
   license: "MIT"
   issue_tracker_url: https://github.com/geerlingguy/ansible-role-php-versions/issues
-  min_ansible_version: 2.10
+  min_ansible_version: 2.15
   platforms:
     - name: Debian
       versions:
         - all
     - name: Ubuntu
       versions:
-        - trusty
-        - xenial
-        - bionic
         - jammy
+        - noble
   galaxy_tags:
     - php
     - web

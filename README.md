@@ -1,6 +1,6 @@
 # Ansible Role: PHP Versions
 
-[![CI](https://github.com/geerlingguy/ansible-role-php-versions/workflows/CI/badge.svg?event=push)](https://github.com/geerlingguy/ansible-role-php-versions/actions?query=workflow%3ACI)
+[![CI](https://github.com/geerlingguy/ansible-role-php-versions/actions/workflows/ci.yml/badge.svg)](https://github.com/geerlingguy/ansible-role-php-versions/actions/workflows/ci.yml)
 
 Allows different PHP versions to be installed when using the `geerlingguy.php` role (or a similar role). This role was originally built for [Drupal VM](https://www.drupalvm.com) but was released more generically so others could use an easier mechanism for switching PHP versions.
 
@@ -12,9 +12,9 @@ N/A
 
 Available variables are listed below, along with default values (see `defaults/main.yml`):
 
-    php_version: '8.2'
+    php_version: '8.3'
 
-The PHP version to be installed. Any [currently-supported PHP major version](http://php.net/supported-versions.php) is a valid option (e.g. `7.4`, `8.0`, `8.1`, or `8.2`).
+The PHP version to be installed. Any [currently-supported PHP major version](http://php.net/supported-versions.php) is a valid option (e.g. `8.1`, `8.2`, or `8.3`).
 
     php_versions_install_recommends: false
 
@@ -31,11 +31,11 @@ The PHP version to be installed. Any [currently-supported PHP major version](htt
       become: true
     
       vars:
-        php_version: '8.2'
+        php_version: '8.3'
     
       roles:
         - name: geerlingguy.repo-remi
-          when: ansible_os_family == 'RedHat'
+          when: ansible_facts.os_family == 'RedHat'
         - geerlingguy.php-versions
         - geerlingguy.php
 
